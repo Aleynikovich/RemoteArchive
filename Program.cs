@@ -9,20 +9,57 @@ namespace ArchivadoRemoto
         static void Main()
         {
             const int entrada = 100;
-            string backupDir = $@"D:\{DateTime.Now:MM/dd/yyyyHH:mm}BackupAll.zip";
+            const string backupDir = @"D:\BackupAll.zip";
+            string backupDirDt =$@"D:\{DateTime.Now:yyyyMMddhhmm}BackupAll.zip";
             ArchiveFacade a = new ArchiveFacade();
-
+            bool backupDone = false;
+            Console.WriteLine($"Esperando entrada {entrada}");
             while (true)
-                if (Cross3.SyncVar.ShowVar($"$IN[{entrada}]") == "TRUE")
+            {
+                if (backupDone)
                 {
-                    if (File.Exists(backupDir))
-                    {
-                        File.Delete(backupDir);
-                    }
-                    a.ArchiveAll(backupDir);
-
-                    System.Threading.Thread.Sleep(5000);
+                    Console.WriteLine($"Esperando entrada {entrada}");
+                    backupDone = false;
                 }
+
+                if (Cross3.SyncVar.ShowVar($"$IN[{entrada}]") != "TRUE") continue;
+                Console.WriteLine("Haciendo archivado...");
+
+                try
+                {
+                    if (File.Exists(backupDir)){File.Delete(backupDir);}
+                    if (File.Exists(backupDirDt)){File.Delete(backupDirDt);}
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+
+                try
+                {
+                    a.ArchiveAll(backupDir);
+                    Console.WriteLine($"Archivado con exito como {backupDirDt}");
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+
+                try
+                {
+                    File.Move(backupDir, backupDirDt);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+                    
+                backupDone = true;
+                System.Threading.Thread.Sleep(5000);
+            }
         }
     }
 }
