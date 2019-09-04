@@ -8,61 +8,31 @@ namespace ArchivadoRemoto
     {
         static void Main()
         {
-            const int entrada = 100;
+            int entrada = Convert.ToInt32(Cross3.SyncVar.ShowVar("$inBckpPlc"));
             const string backupDir = @"D:\BackupAll.zip";
+            string robName = StringManipulation.GetBetween(Cross3.SyncVar.ShowVar("$robname[]"), "\"", "\"");
+
             ArchiveFacade a = new ArchiveFacade();
-            bool backupDone = false;
-            Console.WriteLine($"Esperando entrada {entrada}");
-            while (true)
+
+            if (!Directory.Exists(@"D:\PlcBackups")) Directory.CreateDirectory(@"D:\PlcBackups");
+
+            do
             {
-                if (backupDone)
-                {
-                    Console.WriteLine($"Esperando entrada {entrada}");
-                    Console.WriteLine(Environment.NewLine + Environment.NewLine + Environment.NewLine + Environment.NewLine + Environment.NewLine + Environment.NewLine + Environment.NewLine);
-
-                    backupDone = false;
-                }
-
                 if (Cross3.SyncVar.ShowVar($"$IN[{entrada}]") != "TRUE") continue;
-                Console.WriteLine("Haciendo archivado...");
-                string backupDirDt = $@"D:\{DateTime.Now:yyyyMMddhhmm}BackupAll.zip";
-                try
-                {
-                    if (File.Exists(backupDir)){File.Delete(backupDir);}
-                    if (File.Exists(backupDirDt)){File.Delete(backupDirDt);}
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    throw;
-                }
 
-                try
-                {
-                    a.ArchiveAll(backupDir);
-                    Console.WriteLine($"Archivado con exito como {backupDirDt}");
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    throw;
-                }
+                string backupDirDt = $@"D:\PlcBackups\{DateTime.Now:yyyyMMddhhmm}{robName}.zip";
 
-                try
-                {
-                    File.Move(backupDir, backupDirDt);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    throw;
-                }
-                    
-                backupDone = true;
-                System.Threading.Thread.Sleep(5000);
-            }
+                if (File.Exists(backupDir)) File.Delete(backupDir);
+                if (File.Exists(backupDirDt)) File.Delete(backupDirDt);
+
+                a.ArchiveAll(backupDir);
+
+                File.Move(backupDir, backupDirDt);
+
+            } while (true);
         }
     }
+
 }
 
 
